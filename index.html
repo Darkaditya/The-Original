@@ -1,0 +1,374 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cafe Food Order</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#FFF8E1;
+}
+
+header{
+background:#4E342E;
+color:white;
+padding:15px;
+text-align:center;
+font-size:22px;
+}
+
+.hero{
+background:url("https://images.unsplash.com/photo-1550547660-d9450f859349") center/cover;
+height:220px;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-size:28px;
+font-weight:bold;
+text-shadow:0 3px 10px black;
+}
+
+.menu{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+padding:12px;
+}
+
+.card{
+background:white;
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 4px 12px rgba(0,0,0,0.15);
+transition:0.3s;
+}
+
+.card:hover{
+transform:scale(1.05);
+}
+
+.card img{
+width:100%;
+height:120px;
+object-fit:cover;
+}
+
+.card h4{
+margin:8px;
+}
+
+.price{
+margin-left:8px;
+color:#FF8F00;
+}
+
+.addbtn{
+margin:10px;
+background:#E53935;
+border:none;
+color:white;
+padding:7px 12px;
+border-radius:6px;
+}
+
+.cartbtn{
+position:fixed;
+bottom:80px;
+right:20px;
+background:#E53935;
+color:white;
+border-radius:50%;
+padding:15px;
+font-size:18px;
+}
+
+.cartpanel{
+position:fixed;
+right:-100%;
+top:0;
+width:100%;
+height:100%;
+background:white;
+padding:20px;
+transition:0.4s;
+overflow:auto;
+}
+
+.cartpanel.open{
+right:0;
+}
+
+.remove{
+background:red;
+color:white;
+border:none;
+margin-left:10px;
+}
+
+.order{
+background:#FF8F00;
+border:none;
+color:white;
+padding:12px;
+width:100%;
+margin-top:15px;
+border-radius:8px;
+font-size:16px;
+}
+
+.bottomnav{
+position:fixed;
+bottom:0;
+width:100%;
+background:white;
+display:flex;
+justify-content:space-around;
+padding:10px;
+box-shadow:0 -2px 10px rgba(0,0,0,0.1);
+}
+
+</style>
+</head>
+
+<body>
+
+<header>☕ Cafe Online Order</header>
+
+<div class="hero">
+Fresh Food. Fast Delivery.
+</div>
+
+<div class="menu" id="menu"></div>
+
+<div class="cartbtn" onclick="toggleCart()">
+🛒 <span id="count">0</span>
+</div>
+
+<div class="cartpanel" id="cartpanel">
+
+<h2>Your Cart</h2>
+
+<div id="cartitems"></div>
+
+<h3 id="total"></h3>
+
+<input id="name" placeholder="Customer Name" style="width:100%;padding:10px">
+
+<button class="order" onclick="placeOrder()">Place Order</button>
+
+</div>
+
+<div class="bottomnav">
+🏠 Home
+📋 Menu
+⭐ Reviews
+📞 Contact
+</div>
+
+<script>
+
+const menu=[
+
+// COFFEE
+{name:"Regular Hot Coffee",price:20,img:"https://in.pinterest.com/pin/121949102406756049/"},
+{name:"Hazelnut Hot Coffee",price:30,img:"https://in.pinterest.com/pin/597852919330913288/"},
+{name:"Butterscotch Hot Coffee",price:30,img:"https://in.pinterest.com/pin/121949102406760485/"},
+{name:"Chocolate Hot Coffee",price:40,img:"https://pixabay.com/illustrations/coffee-chocolate-milka-coffeetime-7808637/"},
+{name:"Classic Cold Coffee",price:80,img:"https://in.pinterest.com/pin/1005991635530758929/"},
+{name:"Strong Cold Coffee",price:90,img:"https://in.pinterest.com/pin/11610911539313612/"},
+{name:"Hazelnut Cold Coffee",price:100,img:"https://in.pinterest.com/pin/56435801576714173/"},
+{name:"Butterscotch Cold Coffee",price:90,img:"https://in.pinterest.com/pin/28358672649411052/"},
+{name:"Chocolate Cold Coffee",price:120,img:"https://pixabay.com/photos/coffee-ice-chocolate-latte-drink-7074304/"},
+{name:"Black Coffee",price:10,img:"https://in.pinterest.com/pin/592856738489968009/"},
+
+// SANDWICH
+{name:"Corn Sandwich",price:50,img:"https://in.pinterest.com/pin/503840277077905058/"},
+{name:"Cheese Sandwich",price:70,img:"https://www.pngfind.com/mpng/hwbbTbb_cheese-corn-sandwich-quesadilla-png-transparent-png/"},
+{name:"Cheese & Corn Sandwich",price:80,img:"https://www.pngfind.com/mpng/hwbbTbb_cheese-corn-sandwich-quesadilla-png-transparent-png/"},
+{name:"Paneer Sandwich",price:80,img:"https://www.pngitem.com/middle/mxRRRx_grilled-paneer-tikka-sandwich-hd-png-download/"},
+{name:"Protein Sandwich",price:60,img:"https://i.pinimg.com/originals/f1/7b/02/f17b0274205b14b66ae34d355a93e11f.jpg"},
+{name:"Nutella Sandwich",price:100,img:"https://in.pinterest.com/pin/20336635791113344/"},
+
+// BURGER
+{name:"Classic Burger",price:60,img:"https://pixabay.com/photos/hamburger-food-dish-fast-food-meat-6765033/"},
+{name:"Cheese Burger",price:80,img:"https://in.pinterest.com/pin/43628690137086039/"},
+
+// FRIES
+{name:"French Fries",price:40,img:"https://pngtree.com/freepng/plate-of-crispy-french-fries-with-golden-brown-texture_20329227.html"},
+{name:"Peri Peri Fries",price:60,img:"https://images.unsplash.com/photo-1576107232684-1279f390859f"},
+
+// MOMOS
+{name:"Steam Veg Momo (6 pcs)",price:50,img:"https://pngtree.com/freepng/symmetrical-momos-with-chutney-on-white-plate_20263463.html"},
+{name:"Steam Veg Momo (10 pcs)",price:80,img:"https://pngtree.com/freepng/symmetrical-momos-with-chutney-on-white-plate_20263463.html"},
+{name:"Veg Fried Momo (6 pcs)",price:60,img:"https://pngtree.com/freepng/golden-fried-momos-with-crispy-dumpling-texture_23596988.html"},
+{name:"Veg Fried Momo (10 pcs)",price:100,img:"https://pngtree.com/freepng/golden-fried-momos-with-crispy-dumpling-texture_23596988.html"},
+{name:"Steam Paneer Momo",price:50,img:"https://in.pinterest.com/pin/82331501726073010/"},
+{name:"Paneer Fried Momo",price:70,img:"https://in.pinterest.com/pin/126100858315106304/"},
+{name:"KFC Momo",price:100,img:"https://in.pinterest.com/pin/671317888250384483/"},
+
+// MILKSHAKES
+{name:"Blueberry Milkshake",price:120,img:"https://www.istockphoto.com/en/photo/blueberry-smoothie-gm533433398-94474851"},
+{name:"Blackcurrant Milkshake",price:100,img:"https://in.pinterest.com/pin/957648308269124030/"},
+{name:"Butterscotch Milkshake",price:80,img:"https://classicfoodsbakery.com/wp-content/uploads/2020/11/Butterscotch-milkshake-trichy.jpg"},
+{name:"Strawberry Milkshake",price:80,img:"https://in.pinterest.com/pin/15551561210180145/"},
+{name:"Pineapple Milkshake",price:80,img:"https://bakerspointkenya.com/product/pineapple-smoothie/"},
+{name:"Rose Milkshake",price:80,img:"https://in.pinterest.com/pin/577164508532322781/"},
+{name:"Mango Milkshake",price:80,img:"https://pixabay.com/photos/mango-cocktail-shake-drink-yellow-6183986/"},
+{name:"Banana Milkshake",price:70,img:"https://in.pinterest.com/pin/106819822408906907/"},
+{name:"Vanilla Milkshake",price:70,img:"https://www.gestationaldiabetes.co.uk/wp-content/uploads/2023/06/thick-vanilla-shake1.jpg"},
+
+// CHOCOLATE SHAKES
+{name:"Chocolate Overload Shake",price:120,img:"https://in.pinterest.com/pin/644788871681327573/"},
+{name:"Dark Chocolate Shake",price:100,img:"https://in.pinterest.com/pin/1101693127572824208/"},
+{name:"Peanut Butter Shake",price:100,img:"https://in.pinterest.com/pin/567875834286343396/"},
+{name:"Brownie Shake",price:100,img:"https://in.pinterest.com/pin/383439355798103064/"},
+{name:"Nutella Shake",price:100,img:"https://in.pinterest.com/pin/50313720828560781/"},
+{name:"Oreo Shake",price:100,img:"https://www.pexels.com/photo/chocolate-frappuccino-with-oreo-toppings-8743859/"},
+{name:"Kitkat Shake",price:100,img:"https://pixabay.com/photos/hot-chocolate-drink-dairy-winter-1058197/"},
+{name:"Banana Chocolate Shake",price:80,img:"https://in.pinterest.com/pin/904238431444774800/"},
+{name:"Chocolate Shake",price:80,img:"https://in.pinterest.com/pin/482166703877782035/"},
+
+// MOCKTAIL
+{name:"Blue Lagoon",price:80,img:"https://in.pinterest.com/pin/10273905394970549/"},
+{name:"Mint Mojito",price:80,img:"https://in.pinterest.com/pin/1094445146964204967/"},
+{name:"Black Magic",price:80,img:"https://in.pinterest.com/pin/486740672250072122/"},
+{name:"Orange Sunset",price:80,img:"https://in.pinterest.com/pin/338544097012454482/"},
+
+// PROTEIN SHAKES
+{name:"Post Workout Shake",price:120,img:"https://in.pinterest.com/pin/304907837267354582/"},
+{name:"Fat Loss Shake",price:120,img:"https://in.pinterest.com/pin/17732992277181954/"},
+{name:"Bulk Protein Shake",price:150,img:"https://in.pinterest.com/pin/173388654401205168/"},
+
+// ICE CREAM
+{name:"Chocolate Ice Cream",price:25,img:"https://images.unsplash.com/photo-1563805042-7684c019e1cb"},
+{name:"Strawberry Ice Cream",price:25,img:"https://images.unsplash.com/photo-1570197571499-166b36435e9f"},
+{name:"Vanilla Ice Cream",price:25,img:"https://images.unsplash.com/photo-1579954115545-a95591f28bfc"},
+{name:"Butterscotch Ice Cream",price:25,img:"https://images.unsplash.com/photo-1589712235276-0fbf3d5a90de"}
+
+]
+
+let cart=[]
+
+const menuDiv=document.getElementById("menu")
+
+menu.forEach((item,i)=>{
+
+menuDiv.innerHTML+=`
+
+<div class="card">
+<img src="${item.img}">
+<h4>${item.name}</h4>
+<p class="price">₹${item.price}</p>
+<button class="addbtn" onclick="add(${i})">Add</button>
+</div>
+
+`
+
+})
+
+function add(i){
+
+let item=menu[i]
+
+let exist=cart.find(x=>x.name==item.name)
+
+if(exist){
+
+exist.qty++
+
+}else{
+
+cart.push({...item,qty:1})
+
+}
+
+updateCart()
+
+}
+
+function remove(i){
+
+cart.splice(i,1)
+
+updateCart()
+
+}
+
+function updateCart(){
+
+let html=""
+
+let total=0
+
+cart.forEach((item,index)=>{
+
+total+=item.price*item.qty
+
+html+=`
+
+<p>
+
+${item.name} x ${item.qty}
+
+₹${item.price*item.qty}
+
+<button class="remove" onclick="remove(${index})">X</button>
+
+</p>
+
+`
+
+})
+
+document.getElementById("cartitems").innerHTML=html
+
+document.getElementById("total").innerText="Total ₹"+total
+
+document.getElementById("count").innerText=cart.length
+
+}
+
+function toggleCart(){
+
+document.getElementById("cartpanel").classList.toggle("open")
+
+}
+
+function placeOrder(){
+
+let name=document.getElementById("name").value
+
+let total=0
+
+let list=""
+
+cart.forEach(item=>{
+
+total+=item.price*item.qty
+
+list+=item.name+" x"+item.qty+" - ₹"+(item.price*item.qty)+"%0A"
+
+})
+
+let id="ORD"+Math.floor(Math.random()*999999)
+
+let date=new Date()
+
+let msg=`🧾 Cafe Order%0A%0AOrder ID: ${id}%0ACustomer: ${name}%0A%0AItems:%0A${list}%0ATotal: ₹${total}%0A%0ADate: ${date}`
+
+window.open(`https://wa.me/918709189586?text=${msg}`)
+
+}
+
+</script>
+
+</body>
+</html>
+```
