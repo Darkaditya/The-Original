@@ -2,82 +2,22 @@
 <html>
 <head>
   <title>Adyra Restaurant</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      background: #f8f8f8;
+    body { font-family: Arial; margin: 0; background: #f8f8f8; }
+    header { background: #e23744; color: white; padding: 15px; text-align: center; }
+    .container { padding: 15px; }
+    input, button {
+      width: 100%; padding: 10px; margin: 5px 0;
+      border-radius: 8px; border: 1px solid #ccc;
     }
-
-    header {
-      background: #e23744;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
-
-    .container {
-      padding: 15px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      background: #e23744;
-      color: white;
-      border: none;
-      padding: 10px;
-      width: 100%;
-      border-radius: 8px;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-
-    .menu-item {
-      background: white;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .cart {
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      margin-top: 10px;
-    }
-
-    .admin {
-      display: none;
-    }
-
-    .card {
-      background: white;
-      padding: 10px;
-      margin: 10px 0;
+    button { background: #e23744; color: white; border: none; }
+    .menu-item, .card {
+      background: white; padding: 10px; margin: 10px 0;
       border-radius: 10px;
     }
-
-    img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 5px;
-    }
-
+    .admin { display: none; }
   </style>
 </head>
 
@@ -88,101 +28,105 @@
 <div class="container">
 
 <button onclick="showCustomer()">Customer</button>
-<button onclick="showAdmin()">Admin</button>
+<button onclick="showAdminLogin()">Admin</button>
 
 <!-- CUSTOMER -->
 <div id="customer">
 
 <h3>Login</h3>
-<input id="mobile" placeholder="Mobile Number">
+<input id="mobile" placeholder="Mobile Number" oninput="loadMyOrders()">
 <input id="tableNo" placeholder="Table Number">
 
+<h3>My Orders</h3>
+<div id="myOrders"></div>
+
 <h3>Menu</h3>
+<div class="menu-item">Pizza ₹200 <button onclick="addItem('Pizza',200)">Add</button></div>
+<div class="menu-item">Burger ₹100 <button onclick="addItem('Burger',100)">Add</button></div>
+<div class="menu-item">Pasta ₹150 <button onclick="addItem('Pasta',150)">Add</button></div>
 
-<div class="menu-item">
-  Pizza ₹200 <button onclick="addItem('Pizza',200)">Add</button>
-</div>
-
-<div class="menu-item">
-  Burger ₹100 <button onclick="addItem('Burger',100)">Add</button>
-</div>
-
-<div class="menu-item">
-  Pasta ₹150 <button onclick="addItem('Pasta',150)">Add</button>
-</div>
-
-<div class="cart">
 <h3>Cart</h3>
 <ul id="cart"></ul>
 <h4 id="total"></h4>
-</div>
 
 <button onclick="placeOrder()">Place Order</button>
 
 <h3>Upload Payment Screenshot</h3>
 <input type="file" id="file">
-<button onclick="uploadScreenshot()">Upload Screenshot</button>
+<button onclick="uploadScreenshot()">Upload</button>
 
 </div>
 
-<!-- ADMIN -->
-<div id="admin" class="admin">
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="admin">
+  <h3>Admin Login</h3>
+  <input id="adminPass" type="password">
+  <button onclick="checkPassword()">Login</button>
+</div>
 
-<h3>Search Order</h3>
-<input id="searchId">
-<button onclick="searchOrder()">Search</button>
-
+<!-- ADMIN PANEL -->
+<div id="adminPanel" class="admin">
+<h3>All Orders</h3>
 <div id="orders"></div>
-
 </div>
 
 </div>
 
 <script>
+
 let cart = [];
 let currentOrderId = null;
 
-function showCustomer(){
-  document.getElementById("customer").style.display="block";
-  document.getElementById("admin").style.display="none";
-}
-
-function showAdmin(){
+// UI
+function showCustomer(){ hideAll(); document.getElementById("customer").style.display="block"; }
+function showAdminLogin(){ hideAll(); document.getElementById("adminLogin").style.display="block"; }
+function showAdminPanel(){ hideAll(); document.getElementById("adminPanel").style.display="block"; loadOrders(); }
+function hideAll(){
   document.getElementById("customer").style.display="none";
-  document.getElementById("admin").style.display="block";
-  loadOrders();
+  document.getElementById("adminLogin").style.display="none";
+  document.getElementById("adminPanel").style.display="none";
 }
 
+// PASSWORD
+function checkPassword(){
+  if(document.getElementById("adminPass").value === "adyra123456"){
+    showAdminPanel();
+  } else alert("Wrong Password");
+}
+
+// CART
 function addItem(name, price){
-  cart.push({name, price});
+  let item = cart.find(i=>i.name===name);
+  if(item) item.qty++;
+  else cart.push({name, price, qty:1});
   renderCart();
 }
 
 function renderCart(){
-  let list = document.getElementById("cart");
-  list.innerHTML="";
   let total=0;
-
+  let list=document.getElementById("cart");
+  list.innerHTML="";
   cart.forEach(i=>{
-    total+=i.price;
+    total+=i.price*i.qty;
     let li=document.createElement("li");
-    li.innerText=i.name+" ₹"+i.price;
+    li.innerText=`${i.name} x${i.qty} = ₹${i.price*i.qty}`;
     list.appendChild(li);
   });
-
-  document.getElementById("total").innerText="Total: ₹"+total;
+  document.getElementById("total").innerText="Total ₹"+total;
 }
 
+// PLACE ORDER
 function placeOrder(){
   let mobile=document.getElementById("mobile").value;
   let tableNo=document.getElementById("tableNo").value;
 
-  let total=cart.reduce((s,i)=>s+i.price,0);
+  let total=cart.reduce((s,i)=>s+i.price*i.qty,0);
 
   let order={
     id:Date.now().toString(),
-    mobile,tableNo,items:cart,total,
+    mobile, tableNo, items:cart, total,
     status:"Pending",
+    payment:"Not Verified",
     createdAt:Date.now()
   };
 
@@ -192,9 +136,40 @@ function placeOrder(){
 
   currentOrderId=order.id;
 
-  alert("Order Placed ID: "+order.id);
+  loadMyOrders();
+
+  alert("Order Placed!");
 }
 
+// CUSTOMER VIEW OWN ORDERS
+function loadMyOrders(){
+  let mobile=document.getElementById("mobile").value;
+  let orders=JSON.parse(localStorage.getItem("orders")||"[]");
+
+  let my = orders.filter(o=>o.mobile===mobile);
+
+  let div=document.getElementById("myOrders");
+  div.innerHTML="";
+
+  my.forEach(o=>{
+    let d=document.createElement("div");
+    d.className="card";
+
+    let items=o.items.map(i=>`${i.name} x${i.qty}`).join(", ");
+
+    d.innerHTML=`
+      Order ID: ${o.id}<br>
+      Items: ${items}<br>
+      Total: ₹${o.total}<br>
+      Status: ${o.status}<br>
+      Payment: ${o.payment}
+    `;
+
+    div.appendChild(d);
+  });
+}
+
+// UPLOAD SCREENSHOT
 function uploadScreenshot(){
   let file=document.getElementById("file").files[0];
   let reader=new FileReader();
@@ -213,35 +188,55 @@ function uploadScreenshot(){
   if(file) reader.readAsDataURL(file);
 }
 
+// ADMIN
 function loadOrders(){
   let orders=JSON.parse(localStorage.getItem("orders")||"[]");
   let div=document.getElementById("orders");
   div.innerHTML="";
 
   orders.forEach(o=>{
+    let items=o.items.map(i=>`${i.name} x${i.qty}`).join("<br>");
+
     let d=document.createElement("div");
     d.className="card";
 
     d.innerHTML=`
-      ID: ${o.id}<br>
-      Table: ${o.tableNo}<br>
-      ₹${o.total}<br>
-      Status: ${o.status}<br>
-      ${o.screenshot? `<img src="${o.screenshot}">`:""}
+      <b>ID:</b> ${o.id}<br>
+      <b>Table:</b> ${o.tableNo}<br>
+      <b>Items:</b><br>${items}<br>
+      <b>Total:</b> ₹${o.total}<br>
+
+      <b>Status:</b> ${o.status}
+      <button onclick="updateStatus('${o.id}')">Toggle</button><br>
+
+      <b>Payment:</b> ${o.payment}
+      <button onclick="updatePayment('${o.id}')">Verify</button><br>
+
+      ${o.screenshot? `<img src="${o.screenshot}" width="100">`:""}
     `;
 
     div.appendChild(d);
   });
 }
 
-function searchOrder(){
-  let id=document.getElementById("searchId").value;
+// UPDATE STATUS
+function updateStatus(id){
   let orders=JSON.parse(localStorage.getItem("orders")||"[]");
   let o=orders.find(x=>x.id===id);
-
-  if(o) alert("Table "+o.tableNo+" ₹"+o.total);
-  else alert("Not found");
+  o.status = (o.status==="Pending") ? "Completed" : "Pending";
+  localStorage.setItem("orders",JSON.stringify(orders));
+  loadOrders();
 }
+
+// UPDATE PAYMENT
+function updatePayment(id){
+  let orders=JSON.parse(localStorage.getItem("orders")||"[]");
+  let o=orders.find(x=>x.id===id);
+  o.payment = (o.payment==="Not Verified") ? "Verified" : "Not Verified";
+  localStorage.setItem("orders",JSON.stringify(orders));
+  loadOrders();
+}
+
 </script>
 
 </body>
